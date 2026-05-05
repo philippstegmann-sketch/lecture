@@ -4,114 +4,253 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vorlesefunktion Französisch</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  max-width: 850px;
+  margin: auto;
+  padding: 24px;
+  background: #f4f7fb;
+  color: #1f2937;
+}
+main {
+  background: white;
+  padding: 28px;
+  border-radius: 18px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+textarea, select, input {
+  width: 100%;
+  font-size: 16px;
+  margin-top: 6px;
+  margin-bottom: 16px;
+}
+textarea {
+  min-height: 160px;
+  padding: 12px;
+}
+button {
+  margin: 6px 6px 6px 0;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.primary { background: #2563eb; color: white; }
+.secondary { background: #e5e7eb; }
+.danger { background: #fee2e2; color: #b91c1c; }
+.box {
+  background: #f9fafb;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 14px;
+  margin: 14px 0;
+}
+#currentSentence {
+  display: none;
+  border-left: 5px solid #2563eb;
+  background: #eff6ff;
+  padding: 14px;
+  border-radius: 10px;
+  margin-top: 16px;
+  font-size: 18px;
+}
+#status {
+  color: #4b5563;
+  margin-top: 12px;
+}
+</style>
 </head>
 
-<body style="font-family: Arial; max-width:800px; margin:auto; padding:20px;">
-
+<body>
+<main>
 <h1>Vorlesefunktion Französisch</h1>
+<p>Gib französische Sätze ein und wähle, wie der Text vorgelesen werden soll.</p>
 
-<textarea id="text" rows="6" style="width:100%;">
-Bonjour Madame. Je voudrais réserver une chambre. Est-ce possible ?
-</textarea>
+<label for="text"><strong>Französischer Text</strong></label>
+<textarea id="text">Bonjour Madame. Je voudrais réserver une chambre. Est-ce possible ?</textarea>
 
-<br><br>
+<div class="box">
+  <label for="mode"><strong>Vorlesemodus</strong></label>
+  <select id="mode">
+    <option value="whole">Ganzer Text am Stück</option>
+    <option value="sentence">Satz für Satz ohne Pause</option>
+    <option value="practice">Übungsmodus mit Pause nach jedem Satz</option>
+  </select>
+</div>
 
-<select id="voice"></select>
+<div class="box">
+  <label for="voice"><strong>Französische Stimme</strong></label>
+  <select id="voice"></select>
 
-<br><br>
+  <label for="speed"><strong>Geschwindigkeit: <span id="speedValue">0.9</span>x</strong></label>
+  <input type="range" id="speed" min="0.6" max="1.3" step="0.1" value="0.9">
 
-<label>Geschwindigkeit</label>
-<input type="range" id="speed" min="0.6" max="1.3" step="0.1" value="0.9">
+  <label for="pause"><strong>Pause im Übungsmodus: <span id="pauseValue">3</span> Sekunden</strong></label>
+  <input type="range" id="pause" min="1" max="8" step="1" value="3">
+</div>
 
-<br><br>
+<button class="primary" onclick="start()">▶ Vorlesen</button>
+<button class="secondary" onclick="repeatSentence()">↻ Satz wiederholen</button>
+<button class="secondary" onclick="speechSynthesis.pause()">⏸ Pause</button>
+<button class="secondary" onclick="speechSynthesis.resume()">▶ Weiter</button>
+<button class="danger" onclick="stop()">■ Stopp</button>
 
-<button onclick="start()">▶ Vorlesen</button>
-<button onclick="repeat()">↻ Wiederholen</button>
-<button onclick="speechSynthesis.pause()">⏸ Pause</button>
-<button onclick="speechSynthesis.resume()">▶ Weiter</button>
-<button onclick="stop()">■ Stopp</button>
-
-<br><br>
-
-<label>
-<input type="checkbox" id="practice">
-Übungsmodus (Pause nach jedem Satz)
-</label>
-
+<div id="currentSentence"></div>
 <p id="status"></p>
+
+<p><small>Tipp: Mit <strong>Ctrl + Enter</strong> startest du das Vorlesen direkt.</small></p>
+</main>
 
 <script>
 let voices = [];
 let sentences = [];
-let lastIndex = 0;
 let selectedVoice = null;
+let lastIndex = 0;
+let pauseTimer = null;
+
+const voiceSelect = document.getElementById("voice");
+const textArea = document.getElementById("text");
+const statusBox = document.getElementById("status");
+const currentSentenceBox = document.getElementById("currentSentence");
 
 function loadVoices() {
-  voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith("fr"));
-  const select = document.getElementById("voice");
-  select.innerHTML = "";
+  voices = speechSynthesis.getVoices().filter(v => v.lang && v.lang.startsWith("fr"));
+  voiceSelect.innerHTML = "";
+
+  if (voices.length === 0) {
+    const option = document.createElement("option");
+    option.textContent = "Keine französische Stimme gefunden";
+    voiceSelect.appendChild(option);
+    statusBox.innerText = "Keine französische Stimme gefunden. Chrome oder Edge funktioniert oft am besten.";
+    return;
+  }
 
   voices.forEach(v => {
     const option = document.createElement("option");
     option.value = v.name;
     option.textContent = v.name + " (" + v.lang + ")";
-    select.appendChild(option);
+    voiceSelect.appendChild(option);
   });
+
+  statusBox.innerText = voices.length + " französische Stimme(n) gefunden.";
 }
 
 speechSynthesis.onvoiceschanged = loadVoices;
 loadVoices();
 
-function split(text) {
-  return text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [];
+document.getElementById("speed").addEventListener("input", () => {
+  document.getElementById("speedValue").innerText = document.getElementById("speed").value;
+});
+
+document.getElementById("pause").addEventListener("input", () => {
+  document.getElementById("pauseValue").innerText = document.getElementById("pause").value;
+});
+
+function splitIntoSentences(text) {
+  return text.match(/[^.!?]+[.!?]+|[^.!?]+$/g)?.map(s => s.trim()) || [];
 }
 
-function speakSentence(i) {
-  if (i >= sentences.length) return;
+function chooseVoice() {
+  const selectedName = voiceSelect.value;
+  selectedVoice = voices.find(v => v.name === selectedName) || voices[0] || null;
+}
 
-  const utter = new SpeechSynthesisUtterance(sentences[i]);
+function makeUtterance(text) {
+  const utter = new SpeechSynthesisUtterance(text);
   utter.lang = "fr-FR";
-  utter.rate = document.getElementById("speed").value;
+  utter.rate = Number(document.getElementById("speed").value);
 
-  // 🔑 FIX: immer dieselbe Stimme verwenden
   if (selectedVoice) {
     utter.voice = selectedVoice;
   }
 
-  lastIndex = i;
+  return utter;
+}
+
+function start() {
+  stop();
+  chooseVoice();
+
+  const text = textArea.value.trim();
+  const mode = document.getElementById("mode").value;
+
+  if (!text) {
+    statusBox.innerText = "Bitte zuerst einen Text eingeben.";
+    return;
+  }
+
+  if (mode === "whole") {
+    currentSentenceBox.style.display = "none";
+    statusBox.innerText = "Ganzer Text wird vorgelesen ...";
+
+    const utter = makeUtterance(text);
+    utter.onend = () => statusBox.innerText = "Fertig.";
+    speechSynthesis.speak(utter);
+    return;
+  }
+
+  sentences = splitIntoSentences(text);
+  speakSentence(0);
+}
+
+function speakSentence(index) {
+  const mode = document.getElementById("mode").value;
+
+  if (index >= sentences.length) {
+    statusBox.innerText = "Fertig.";
+    currentSentenceBox.style.display = "none";
+    return;
+  }
+
+  lastIndex = index;
+  const sentence = sentences[index];
+
+  currentSentenceBox.style.display = "block";
+  currentSentenceBox.innerText = sentence;
+  statusBox.innerText = "Satz " + (index + 1) + " von " + sentences.length + " wird vorgelesen ...";
+
+  const utter = makeUtterance(sentence);
 
   utter.onend = () => {
-    if (document.getElementById("practice").checked) {
-      document.getElementById("status").innerText = "👉 Jetzt nachsprechen...";
-      setTimeout(() => speakSentence(i + 1), 3000);
+    if (mode === "practice") {
+      const pauseSeconds = Number(document.getElementById("pause").value);
+      statusBox.innerText = "Jetzt nachsprechen ... (" + pauseSeconds + " Sekunden)";
+      pauseTimer = setTimeout(() => speakSentence(index + 1), pauseSeconds * 1000);
     } else {
-      speakSentence(i + 1);
+      speakSentence(index + 1);
     }
   };
 
   speechSynthesis.speak(utter);
 }
 
-function start() {
-  speechSynthesis.cancel();
+function repeatSentence() {
+  if (sentences.length === 0) {
+    chooseVoice();
+    sentences = splitIntoSentences(textArea.value.trim());
+  }
 
-  // 🔑 Stimme einmal auswählen und fixieren
-  const selectedName = document.getElementById("voice").value;
-  selectedVoice = voices.find(v => v.name === selectedName) || voices[0];
-
-  sentences = split(document.getElementById("text").value);
-  speakSentence(0);
-}
-
-function repeat() {
-  speechSynthesis.cancel();
-  speakSentence(lastIndex);
+  if (sentences.length > 0) {
+    speechSynthesis.cancel();
+    clearTimeout(pauseTimer);
+    speakSentence(lastIndex);
+  }
 }
 
 function stop() {
   speechSynthesis.cancel();
+  clearTimeout(pauseTimer);
+  statusBox.innerText = "Gestoppt.";
 }
-</script>
 
+textArea.addEventListener("keydown", function(event) {
+  if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault();
+    start();
+  }
+});
+</script>
 </body>
 </html>
