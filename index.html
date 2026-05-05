@@ -11,7 +11,7 @@
 <h1>Vorlesefunktion Französisch</h1>
 
 <textarea id="text" rows="6" style="width:100%;">
-Bonjour Madame. Je voudrais réserver une chambre.
+Bonjour Madame. Je voudrais réserver une chambre. Est-ce possible ?
 </textarea>
 
 <br><br>
@@ -43,17 +43,18 @@ Bonjour Madame. Je voudrais réserver une chambre.
 <script>
 let voices = [];
 let sentences = [];
-let index = 0;
 let lastIndex = 0;
+let selectedVoice = null;
 
 function loadVoices() {
   voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith("fr"));
   const select = document.getElementById("voice");
   select.innerHTML = "";
+
   voices.forEach(v => {
     const option = document.createElement("option");
     option.value = v.name;
-    option.textContent = v.name;
+    option.textContent = v.name + " (" + v.lang + ")";
     select.appendChild(option);
   });
 }
@@ -72,18 +73,17 @@ function speakSentence(i) {
   utter.lang = "fr-FR";
   utter.rate = document.getElementById("speed").value;
 
-  const selected = document.getElementById("voice").value;
-  const voice = voices.find(v => v.name === selected);
-  if (voice) utter.voice = voice;
+  // 🔑 FIX: immer dieselbe Stimme verwenden
+  if (selectedVoice) {
+    utter.voice = selectedVoice;
+  }
 
   lastIndex = i;
 
   utter.onend = () => {
     if (document.getElementById("practice").checked) {
       document.getElementById("status").innerText = "👉 Jetzt nachsprechen...";
-      setTimeout(() => {
-        speakSentence(i + 1);
-      }, 3000);
+      setTimeout(() => speakSentence(i + 1), 3000);
     } else {
       speakSentence(i + 1);
     }
@@ -94,6 +94,11 @@ function speakSentence(i) {
 
 function start() {
   speechSynthesis.cancel();
+
+  // 🔑 Stimme einmal auswählen und fixieren
+  const selectedName = document.getElementById("voice").value;
+  selectedVoice = voices.find(v => v.name === selectedName) || voices[0];
+
   sentences = split(document.getElementById("text").value);
   speakSentence(0);
 }
