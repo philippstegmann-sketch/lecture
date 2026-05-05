@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vorlesefunktion Französisch</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent: #2563eb;
+      --accent-dark: #1d4ed8;
+      --border: #d1d5db;
+      --danger: #dc2626;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #e0ecff, #f8fafc);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 32px 16px;
+    }
+
+    main {
+      width: 100%;
+      max-width: 860px;
+      background: var(--card);
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+      padding: 32px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(2rem, 5vw, 3rem);
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin: 0 0 28px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      resize: vertical;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      font: inherit;
+      font-size: 1.05rem;
+      line-height: 1.5;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    textarea:focus,
+    select:focus,
+    input[type="range"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin: 22px 0;
+    }
+
+    .control-card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      background: #f9fafb;
+    }
+
+    select {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: white;
+      font: inherit;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .speed-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 13px 20px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s, background 0.2s, box-shadow 0.2s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .primary {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+    }
+
+    .primary:hover {
+      background: var(--accent-dark);
+    }
+
+    .secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .danger {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    .info {
+      margin-top: 22px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #eff6ff;
+      color: #1e3a8a;
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
+    .status {
+      margin-top: 14px;
+      min-height: 24px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .current-sentence {
+      margin-top: 18px;
+      padding: 16px;
+      border-left: 5px solid var(--accent);
+      border-radius: 14px;
+      background: #f8fafc;
+      font-size: 1.05rem;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .footer-note {
+      margin-top: 26px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 720px) {
+      main {
+        padding: 22px;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Vorlesefunktion Französisch</h1>
+    <p class="subtitle">
+      Gib französische Sätze ein und lass sie dir vorlesen. Die Seite liest längere Texte automatisch Satz für Satz vor.
+    </p>
+
+    <label for="textInput">Französischer Text</label>
+    <textarea id="textInput" placeholder="Beispiel: Bonjour Madame. Je voudrais réserver une chambre pour deux nuits. Est-ce possible ?"></textarea>
+
+    <div class="controls">
+      <div class="control-card">
+        <label for="voiceSelect">Stimme</label>
+        <select id="voiceSelect">
+          <option value="">Französische Stimmen werden geladen ...</option>
+        </select>
+      </div>
+
+      <div class="control-card">
+        <label for="speedRange">Geschwindigkeit</label>
+        <input id="speedRange" type="range" min="0.6" max="1.3" step="0.05" value="0.9" />
+        <div class="speed-row">
+          <span>langsamer</span>
+          <strong id="speedValue">0.90×</strong>
+          <span>schneller</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="buttons">
+      <button class="primary" id="speakButton">▶ Vorlesen</button>
+      <button class="secondary" id="pauseButton">⏸ Pause</button>
+      <button class="secondary" id="resumeButton">▶ Weiter</button>
+      <button class="danger" id="stopButton">■ Stopp</button>
+    </div>
+
+    <div class="current-sentence" id="currentSentence"></div>
+    <div class="status" id="status"></div>
+
+    <div class="info">
+      Tipp: Für gutes Hörverstehen sind kurze Abschnitte ideal. Du kannst aber auch mehrere Sätze eingeben; sie werden automatisch getrennt vorgelesen.
+    </div>
+
+    <p class="footer-note">
+      Hinweis: Die verfügbaren Stimmen hängen vom Gerät und Browser ab. Falls keine französische Stimme erscheint, kann ein anderer Browser helfen.
+    </p>
+  </main>
+
+  <script>
+    const textInput = document.getElementById("textInput");
+    const voiceSelect = document.getElementById("voiceSelect");
+    const speedRange = document.getElementById("speedRange");
+    const speedValue = document.getElementById("speedValue");
+    const speakButton = document.getElementById("speakButton");
+    const pauseButton = document.getElementById("pauseButton");
+    const resumeButton = document.getElementById("resumeButton");
+    const stopButton = document.getElementById("stopButton");
+    const statusBox = document.getElementById("status");
+    const currentSentenceBox = document.getElementById("currentSentence");
+
+    let voices = [];
+    let sentences = [];
+    let sentenceIndex = 0;
+    let isReading = false;
+
+    const exampleText = "Bonjour Madame. Je voudrais réserver une chambre pour deux nuits. Est-ce possible ?";
+    textInput.value = exampleText;
+
+    function updateSpeedLabel() {
+      speedValue.textContent = Number(speedRange.value).toFixed(2) + "×";
+    }
+
+    function getFrenchVoices() {
+      return voices.filter(voice => voice.lang && voice.lang.toLowerCase().startsWith("fr"));
+    }
+
+    function loadVoices() {
+      voices = window.speechSynthesis.getVoices();
+      const frenchVoices = getFrenchVoices();
+
+      voiceSelect.innerHTML = "";
+
+      if (frenchVoices.length === 0) {
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "Keine französische Stimme gefunden";
+        voiceSelect.appendChild(option);
+        statusBox.textContent = "Es wurde noch keine französische Stimme gefunden. Manchmal hilft es, die Seite neu zu laden.";
+        return;
+      }
+
+      frenchVoices.forEach((voice, index) => {
+        const option = document.createElement("option");
+        option.value = voice.name;
+        option.textContent = `${voice.name} (${voice.lang})`;
+        voiceSelect.appendChild(option);
+
+        const lowerName = voice.name.toLowerCase();
+        if (index === 0 || lowerName.includes("amelie") || lowerName.includes("audrey") || lowerName.includes("hortense") || lowerName.includes("thomas")) {
+          option.selected = true;
+        }
+      });
+
+      statusBox.textContent = `${frenchVoices.length} französische Stimme(n) gefunden.`;
+    }
+
+    function splitIntoSentences(text) {
+      return text
+        .replace(/\s+/g, " ")
+        .trim()
+        .match(/[^.!?]+[.!?]+|[^.!?]+$/g)
+        ?.map(sentence => sentence.trim())
+        .filter(Boolean) || [];
+    }
+
+    function getSelectedVoice() {
+      const selectedName = voiceSelect.value;
+      return getFrenchVoices().find(voice => voice.name === selectedName) || getFrenchVoices()[0] || null;
+    }
+
+    function speakCurrentSentence() {
+      if (!isReading || sentenceIndex >= sentences.length) {
+        finishReading();
+        return;
+      }
+
+      const sentence = sentences[sentenceIndex];
+      const utterance = new SpeechSynthesisUtterance(sentence);
+      const selectedVoice = getSelectedVoice();
+
+      utterance.lang = "fr-FR";
+      utterance.rate = Number(speedRange.value);
+      utterance.pitch = 1;
+
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+
+      currentSentenceBox.style.display = "block";
+      currentSentenceBox.textContent = sentence;
+      statusBox.textContent = `Satz ${sentenceIndex + 1} von ${sentences.length} wird vorgelesen ...`;
+
+      utterance.onend = () => {
+        sentenceIndex++;
+        speakCurrentSentence();
+      };
+
+      utterance.onerror = () => {
+        statusBox.textContent = "Beim Vorlesen ist ein Fehler aufgetreten.";
+        finishReading();
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function startReading() {
+      const text = textInput.value.trim();
+
+      if (!text) {
+        statusBox.textContent = "Bitte zuerst einen französischen Satz eingeben.";
+        currentSentenceBox.style.display = "none";
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      sentences = splitIntoSentences(text);
+      sentenceIndex = 0;
+      isReading = true;
+      speakCurrentSentence();
+    }
+
+    function finishReading() {
+      isReading = false;
+      sentenceIndex = 0;
+      statusBox.textContent = "Fertig.";
+    }
+
+    speakButton.addEventListener("click", startReading);
+
+    pauseButton.addEventListener("click", () => {
+      if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {
+        window.speechSynthesis.pause();
+        statusBox.textContent = "Pausiert.";
+      }
+    });
+
+    resumeButton.addEventListener("click", () => {
+      if (window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+        statusBox.textContent = "Weiter ...";
+      }
+    });
+
+    stopButton.addEventListener("click", () => {
+      window.speechSynthesis.cancel();
+      isReading = false;
+      sentenceIndex = 0;
+      statusBox.textContent = "Gestoppt.";
+    });
+
+    speedRange.addEventListener("input", updateSpeedLabel);
+
+    textInput.addEventListener("keydown", event => {
+      if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        startReading();
+      }
+    });
+
+    if ("speechSynthesis" in window) {
+      loadVoices();
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    } else {
+      statusBox.textContent = "Dieser Browser unterstützt leider keine Vorlesefunktion.";
+      speakButton.disabled = true;
+    }
+
+    updateSpeedLabel();
+  </script>
+</body>
+</html>
